@@ -69,10 +69,10 @@ def get_matrix():
         row = []
         for j in range(cols):
             entry = matrix_entries[i*cols + j].get()
-            if entry.isdigit():
-                row.append(int(entry))
-            else:
-                print("Please enter valid integers.")
+            try:
+                row.append(float(entry))
+            except ValueError:
+                print("Please enter valid numbers.")
                 return
         matrix.append(row)
     rref_matrix = rref(matrix)
