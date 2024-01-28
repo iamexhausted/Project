@@ -123,6 +123,7 @@ def get_matrix():
             entries[i][j].insert(0, str(rref_matrix[i][j]))
             rref_matrix_entries.append(entries[i][j])
             if k == 0:
+                global result_label
                 result_label = tk.Label(root, text="Result")
                 result_label.grid(row=i+rows+4, column=j+1)
                 k = 1
@@ -222,6 +223,8 @@ def solve_rref(matrix):
     return "Unexpected case."
 
 def solve():
+    global info_label
+    global solution_label
     get_matrix()
     rows_m = len(m)
     cols_m = len(m[0])
