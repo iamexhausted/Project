@@ -2,6 +2,10 @@ import tkinter as tk
 
 matrix_entries = []
 rref_matrix_entries = []
+result_label = None   # A label to separate user's matrix and rref matrix
+solution_label = None # A label displaying solutions
+info_label = None
+
 
 # A function to row reduce
 def rref(matrix):
@@ -40,6 +44,24 @@ def create_matrix():
         entry.destroy()
     matrix_entries.clear()
 
+    for entry in rref_matrix_entries:
+        entry.destroy()
+    rref_matrix_entries.clear()
+
+    # A command to destroy label when creating a new matrix
+    global result_label
+    if result_label is not None:
+        result_label.destroy()
+
+    # A command to destroy label when creating a new matrix
+    global solution_label
+    if solution_label is not None:
+        solution_label.destroy()
+
+    global info_label
+    if info_label is not None:
+        info_label.destroy()
+
     # Get the input from the Entry widgets
     input_rows = entry_rows.get()
     input_cols = entry_cols.get()
@@ -60,6 +82,11 @@ def create_matrix():
     else:
         print("Please enter valid integers.")
 
+def glob(rref_matrix):
+    global m
+    m = rref_matrix
+
+
 # A function to create a rref matrix 
 def get_matrix():
     matrix = []
@@ -77,6 +104,9 @@ def get_matrix():
         matrix.append(row)
     rref_matrix = rref(matrix)
     
+    glob(rref_matrix)  # rref_matrix is global and it's f
+    
+    
     # Clear any existing Entry widgets in the rref matrix
     for entry in rref_matrix_entries:
         entry.destroy()
@@ -93,13 +123,116 @@ def get_matrix():
             entries[i][j].insert(0, str(rref_matrix[i][j]))
             rref_matrix_entries.append(entries[i][j])
             if k == 0:
-                result = tk.Label(root, text="Result")
-                result.grid(row=i+rows+4, column=j+1)
+                result_label = tk.Label(root, text="Result")
+                result_label.grid(row=i+rows+4, column=j+1)
                 k = 1
-            
+
+def solve_rref(matrix):
+    # Number of equations
+    n = len(matrix)
+
+    # Number of variables
+    m = len(matrix[0]) - 1
+
+    k = 0  # a variable to check for a unique solution
+           # (every time there is a sum == 1 it will increase)
+    g = n  # a variable to check for a unique solution
+           # (every time there is a row of zeroes it will decrease)
+
+    solution = [row[-1] for row in matrix if sum(row[::]) != 0]
+    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+                          'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+    
+    for row in matrix:
+        # Check for no solutions
+        if row[-1] != 0 and (sum([int(v) for v in row[:-1]]) == 0):
+            return "There are no solutions."
+
+        # Check for a unique solution
+        if (sum([v for v in row[:-1]]) == 1):
+            k+=1
+        elif (sum([v for v in row[:-1]]) == 0):
+            g-=1
+        
+        if k == g:
+            result = []
+            variables = []
+            for row in matrix:
+                for i in range(m):
+                    if row[i] == 1:
+                        variable1 = letters[i]
+                        variables.append(variable1)
+            for var, val in zip(variables, solution):
+                string = f'{var} = {val}'
+                result.append(string)
+            return f"There is exactly one solution: {result}"
+
+        # Check for infinite solutions
+        if (sum([v for v in row[:-1]]) != 1) or (sum([v for v in row[:-1]]) != 0):
+            variables1 = []    # pivots
+            variables2 = []    # free variables
+            result = []        # a final list of all solutions
+            for row in matrix:
+                k=0     # a variable to control pivots
+                for j in range(m):
+                    if k == 0:
+                        string = ''  # a string for pivots
+                        after = ''   # a string for free variables
+                        if row[j] == 1:
+                            k=1
+                            string += letters[j]
+                    else:
+                        if row[j] != 0:
+                            if row[j] < 0 and row[-1] == 0:
+                                a = str(row[j])
+                                a = a[1::]
+                                a = float(a)
+                                if a == 1:
+                                    after += f'{letters[j]}'
+                                else:
+                                    after += f'{a}*{letters[j]}'
+                            elif row[j] > 0 and row[-1] == 0:
+                                if row[j] == 1:
+                                    after += f'-{letters[j]}'
+                                else:
+                                    after += f'-{row[j]}*{letters[j]}'
+                            elif row[j] < 0 and row[-1] != 0:
+                                a = str(row[j])
+                                a = a[1::]
+                                a = float(a)
+                                if a == 1:
+                                    after += f' + {letters[j]}'
+                                else:
+                                    after += f' + {a}*{letters[j]}'
+                            else:
+                                if row[j] == 1:
+                                    after += f' - {letters[j]}'
+                                else:
+                                    after += f' - {row[j]}*{letters[j]}'
+                            
+                variables1.append(string)
+                variables2.append(after)
+            for var1, val, var2 in zip(variables1, solution, variables2):
+                if val == 0:
+                    string = f'{var1} = {var2}'
+                else:
+                    string = f'{var1} = {val}{var2}'
+                result.append(string)
+            return f"There are infinitely many solutions: {result}"  
+    return "Unexpected case."
+
+def solve():
+    get_matrix()
+    rows_m = len(m)
+    cols_m = len(m[0])
+    solution = solve_rref(m)
+    info_label = tk.Label(root, text='Solution:')
+    info_label.grid(row=rows_m+4, column=cols_m+1) 
+    solution_label = tk.Label(root, text=solution)
+    solution_label.grid(row=rows_m+6, column=cols_m+1)    
 
 root = tk.Tk()
-root.title("Matrix Creator")
+root.title("Solve equations")
 
 # Entry widgets to enter the number of rows and columns
 entry_rows = tk.Entry(root)
@@ -117,8 +250,8 @@ label_cols.grid(row=1, column=0)
 button_create = tk.Button(root, text="Create Matrix", command=create_matrix)
 button_create.grid(row=2, column=0)
 
-# A Button to get rref matrix
-button_rref = tk.Button(root, text="RREF Matrix", command=get_matrix)
-button_rref.grid(row=2, column=1)
+# A Button to get solution
+button_sol = tk.Button(root, text="Solution", command=solve)
+button_sol.grid(row=2, column=1)
 
 root.mainloop()
