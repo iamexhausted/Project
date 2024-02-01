@@ -227,13 +227,17 @@ def solve_rref(matrix):
                             
                 pivots.append(string)
                 variables.append(after)
-                print(variables)
             for piv, val, var2 in zip(pivots, solution, variables):
-                if val == 0:
-                    string = f'{piv} = {var2}'
-                else:
-                    string = f'{piv} = {val}{var2}'
-                result.append(string)
+                if piv != '':
+                    if val != 0:
+                        string = f'{piv} = {val}{var2}'
+                        result.append(string)
+                    elif val == 0 and var2 == '':
+                        string = f'{piv} = {val}'
+                        result.append(string)
+                    else:
+                        string = f'{piv} = {var2}'
+                        result.append(string)
             return f"There are infinitely many solutions: {result}"  
     return "Unexpected case."
 
