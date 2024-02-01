@@ -105,12 +105,25 @@ def get_matrix():
     rref_matrix = rref(matrix)
     
     glob(rref_matrix)  # rref_matrix is global and it's f
-    
-    
-    # Clear any existing Entry widgets in the rref matrix
+
     for entry in rref_matrix_entries:
         entry.destroy()
     rref_matrix_entries.clear()
+
+    # A command to destroy label when creating a new matrix
+    global result_label
+    if result_label is not None:
+        result_label.destroy()
+
+    # A command to destroy label when creating a new matrix
+    global solution_label
+    if solution_label is not None:
+        solution_label.destroy()
+
+    global info_label
+    if info_label is not None:
+        info_label.destroy()
+    
 
     # A matrix of Entry widgets for the rref matrix
     entries = [[tk.Entry(root) for _ in range(cols)] for _ in range(rows)]
@@ -123,7 +136,6 @@ def get_matrix():
             entries[i][j].insert(0, str(rref_matrix[i][j]))
             rref_matrix_entries.append(entries[i][j])
             if k == 0:
-                global result_label
                 result_label = tk.Label(root, text="Result")
                 result_label.grid(row=i+rows+4, column=j+1)
                 k = 1
@@ -140,7 +152,7 @@ def solve_rref(matrix):
     g = n  # a variable to check for a unique solution
            # (every time there is a row of zeroes it will decrease)
 
-    solution = [row[-1] for row in matrix if sum(row[::]) != 0]
+    solution = [row[-1] for row in matrix]
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
                           'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
     
@@ -148,33 +160,35 @@ def solve_rref(matrix):
         # Check for no solutions
         if row[-1] != 0 and (sum([int(v) for v in row[:-1]]) == 0):
             return "There are no solutions."
-
+    
         # Check for a unique solution
         if (sum([v for v in row[:-1]]) == 1):
             k+=1
         elif (sum([v for v in row[:-1]]) == 0):
             g-=1
         
-        if k == g:
-            result = []
-            variables = []
-            for row in matrix:
-                for i in range(m):
-                    if row[i] == 1:
-                        variable1 = letters[i]
-                        variables.append(variable1)
-            for var, val in zip(variables, solution):
+    if k == g:
+        result = []
+        variables1 = []
+        for row in matrix:
+            for i in range(m):
+                if row[i] == 1:
+                    variable1 = letters[i]
+                    variables1.append(variable1)
+        for var, val in zip(variables1, solution):
+            if var != '':
                 string = f'{var} = {val}'
                 result.append(string)
-            return f"There is exactly one solution: {result}"
-
+        return f"There is exactly one solution: {result}"
+    
+    for row in matrix:
         # Check for infinite solutions
         if (sum([v for v in row[:-1]]) != 1) or (sum([v for v in row[:-1]]) != 0):
-            variables1 = []    # pivots
-            variables2 = []    # free variables
+            pivots = []    # pivots
+            variables = []    # free variables
             result = []        # a final list of all solutions
             for row in matrix:
-                k=0     # a variable to control pivots
+                k=0     # a variable to control pivot positions
                 for j in range(m):
                     if k == 0:
                         string = ''  # a string for pivots
@@ -211,13 +225,14 @@ def solve_rref(matrix):
                                 else:
                                     after += f' - {row[j]}*{letters[j]}'
                             
-                variables1.append(string)
-                variables2.append(after)
-            for var1, val, var2 in zip(variables1, solution, variables2):
+                pivots.append(string)
+                variables.append(after)
+                print(variables)
+            for piv, val, var2 in zip(pivots, solution, variables):
                 if val == 0:
-                    string = f'{var1} = {var2}'
+                    string = f'{piv} = {var2}'
                 else:
-                    string = f'{var1} = {val}{var2}'
+                    string = f'{piv} = {val}{var2}'
                 result.append(string)
             return f"There are infinitely many solutions: {result}"  
     return "Unexpected case."
